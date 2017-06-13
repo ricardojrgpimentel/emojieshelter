@@ -105,6 +105,20 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  background-color: white;
+  transition: all 2000ms;
+}
+
+/*.emoji-area:hover{
+  background-color: #7e9ebf;
+  color: white;
+  transition: none;
+}*/
+
+.emoji-area:active{
+  background-color: #2b3c4e;
+  color: white;
+  transition: none;
 }
 
 .emoji-area p {
