@@ -2,7 +2,6 @@ import React from 'react'
 import EmojiSquare from './emojiSquare'
 import DATA from './emojis.json'
 import $ from 'jquery'
-import AdSense from 'react-adsense'
 
 class SiteBody extends React.Component{
 
@@ -81,12 +80,6 @@ class SiteBody extends React.Component{
               <li id='li-confuse' onClick={(e) => {this.handleSelectedClass(e.target.id); this.selectCategory("confuse")}}>Confuse</li>
               <li id='li-angry' onClick={(e) => {this.handleSelectedClass(e.target.id); this.selectCategory("angry")}}>Angry</li>
             </ul>
-          </div>
-          <div className='col-12'>
-            <AdSense.Google
-              client='ca-pub-7848143041008345'
-              slot='6907634896' 
-            />
           </div>
           {this.state.selected.length <= 0 ? this.renderAll() : this.renderOneCat(this.state.selected) }
 
