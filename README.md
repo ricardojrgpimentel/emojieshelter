@@ -1,14 +1,14 @@
 ## Emojieshelter.club
 
-Created with react
+React application built with Vite.
 
-development env
+### Development
 
 ```
-npm start
+npm run dev
 ```
 
-production ready
+### Production build
 
 ```
 npm run build
