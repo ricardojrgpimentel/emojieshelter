@@ -3,12 +3,15 @@ import SiteBody from './siteBody'
 import Header from './header'
 import Footer from './footer'
 
+import NavBar from './NavBar'
+
 const App: React.FC = () => (
-  <div className="min-h-screen bg-slate-50 flex flex-col">
+  <div className="flex flex-col min-h-screen">
+    <NavBar />
     <Header />
-    <div className="flex-grow">
+    <main className="flex-grow">
       <SiteBody />
-    </div>
+    </main>
     <Footer />
   </div>
 )

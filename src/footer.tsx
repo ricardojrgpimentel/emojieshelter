@@ -12,7 +12,7 @@ const Footer: React.FC = () => (
           className="mb-8"
         >
           <div className="text-2xl font-black text-white mb-2">
-            Emoji<span className="text-indigo-500">Shelter</span>
+            Emoji<span className="text-indigo-400">Shelter</span>
           </div>
           <p className="text-sm text-slate-500 max-w-xs mx-auto">
             Your cozy corner for the best unicode emojis on the web.

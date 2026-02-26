@@ -60,7 +60,7 @@ const SiteBody: React.FC = () => {
   }
 
   return (
-    <main className="container mx-auto px-4 py-12 relative">
+    <main id="gallery" className="container mx-auto px-4 py-24 relative transition-colors duration-500 scroll-mt-20">
       {/* Search and Categories Container */}
       <div className="max-w-4xl mx-auto mb-16 space-y-12">
         {/* Search Bar */}
@@ -69,12 +69,13 @@ const SiteBody: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="relative group"
         >
-          <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200" />
+          <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-3xl blur opacity-25 group-hover:opacity-60 transition duration-1000 group-hover:duration-200" />
           <div className="relative">
             <input
               type="text"
               placeholder="Search for an emoji..."
-              className="w-full px-8 py-5 bg-white/80 backdrop-blur-sm border-2 border-slate-100 rounded-2xl focus:border-indigo-500 focus:outline-none transition-all duration-300 shadow-xl text-xl font-medium"
+              aria-label="Search emojis"
+              className="w-full px-8 py-5 bg-slate-900/80 backdrop-blur-sm border-2 border-slate-800 rounded-2xl focus:border-indigo-500 focus:outline-none transition-all duration-300 shadow-xl text-xl font-medium text-slate-100 placeholder:text-slate-600"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -88,7 +89,7 @@ const SiteBody: React.FC = () => {
                     onClick={() => setSearch('')} 
                     className="hover:text-indigo-600 transition-colors bg-slate-100 p-1.5 rounded-full"
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
                   </motion.button>
                 )}
               </AnimatePresence>
@@ -107,7 +108,7 @@ const SiteBody: React.FC = () => {
           <CategoryButton
             active={!selected}
             onClick={() => setSelected(null)}
-            label="All"
+            label="All Emojis"
             color="indigo"
           />
 
@@ -125,14 +126,14 @@ const SiteBody: React.FC = () => {
           <CategoryButton
             active={selected === 'shelter'}
             onClick={() => setSelected('shelter')}
-            label={`🏠 Shelter (${sheltered.length})`}
+            label={`💖 My Shelter (${sheltered.length})`}
             color="rose"
           />
 
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="px-6 py-3 rounded-full font-bold transition-all duration-300 bg-slate-900 text-white shadow-lg hover:shadow-indigo-500/20 flex items-center gap-2"
+            className="px-6 py-3 rounded-full font-bold transition-all duration-300 bg-slate-800 text-white shadow-lg hover:shadow-indigo-500/20 flex items-center gap-2"
             onClick={() => {
               const random = allEmojis[Math.floor(Math.random() * allEmojis.length)]
               setSearch(random.text)
@@ -182,8 +183,8 @@ const SiteBody: React.FC = () => {
             className="text-center py-32"
           >
             <div className="text-6xl mb-6">🤷‍♂️</div>
-            <h3 className="text-3xl font-black text-slate-800 mb-2">No emojis found</h3>
-            <p className="text-slate-500 text-lg">Try a different search or category!</p>
+            <h3 className="text-3xl font-black text-slate-100 mb-2">No emojis found</h3>
+            <p className="text-slate-400 text-lg">Try a different search or category!</p>
             <button 
               onClick={() => { setSearch(''); setSelected(null); }}
               className="mt-8 text-indigo-600 font-bold hover:underline"
@@ -193,6 +194,41 @@ const SiteBody: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      {/* About Section */}
+      <motion.section 
+        id="about" 
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1 }}
+        className="max-w-4xl mx-auto py-32 border-t border-slate-900 mt-24"
+      >
+        <div className="grid md:grid-cols-2 gap-16 items-center">
+          <div>
+            <h2 className="text-4xl font-black text-white mb-6 tracking-tight">
+              A Sanctuary for <span className="text-indigo-400">Characters</span>
+            </h2>
+            <p className="text-slate-400 text-lg leading-relaxed mb-6">
+              Emoji Shelter was born from a simple idea: that digital expressions deserve a place to shine. We curate the most beautiful, expressive, and unique unicode characters so you can find exactly what you need to breathe life into your conversations.
+            </p>
+            <div className="flex gap-4">
+              <div className="px-4 py-2 bg-slate-800 rounded-xl border border-slate-700 text-xs font-bold text-slate-300 uppercase tracking-widest">
+                100% Unicode
+              </div>
+              <div className="px-4 py-2 bg-slate-800 rounded-xl border border-slate-700 text-xs font-bold text-slate-300 uppercase tracking-widest">
+                Privacy First
+              </div>
+            </div>
+          </div>
+          <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-3xl p-8 border border-slate-800 backdrop-blur-sm">
+            <div className="text-6xl mb-4 group-hover:animate-bounce transition-all">🏠</div>
+            <h3 className="text-xl font-bold text-white mb-2">Build Your Shelter</h3>
+            <p className="text-slate-500">
+              Save your favorite emojis to your personal local shelter. No accounts, no tracking—just your favorite expressions, right where you need them.
+            </p>
+          </div>
+        </div>
+      </motion.section>
     </main>
   )
 }
@@ -211,8 +247,8 @@ const CategoryButton: React.FC<CategoryButtonProps> = ({ active, onClick, label,
     : 'bg-rose-600 text-white border-rose-600 shadow-rose-500/40 ring-4 ring-rose-500/10'
   
   const inactiveClasses = color === 'indigo'
-    ? 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50'
-    : 'bg-white text-rose-600 border-slate-200 hover:border-rose-400 hover:bg-rose-50'
+    ? 'bg-slate-900 text-slate-400 border-slate-800 hover:border-indigo-400 hover:bg-indigo-900/20'
+    : 'bg-slate-900 text-rose-400 border-slate-800 hover:border-rose-400 hover:bg-rose-900/20'
 
   return (
     <motion.button

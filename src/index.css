@@ -1,13 +1,19 @@
 @import "tailwindcss";
 
+html {
+  scroll-behavior: smooth;
+}
+
 :root {
-  --primary: #5c6bc0;
-  --bg: #f8fafc;
+  --primary: #90caf9;
+  --bg: #020617;
+  --text: #f8fafc;
 }
 
 body {
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: var(--bg);
+  color: var(--text);
   min-height: 100vh;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Outfit', sans-serif;
+  transition: background-color 0.5s ease, color 0.5s ease;
 }
