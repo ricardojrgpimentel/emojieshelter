@@ -4,9 +4,11 @@ import Header from './header'
 import Footer from './footer'
 
 const App: React.FC = () => (
-  <div className='wrap'>
+  <div className="min-h-screen bg-slate-50 flex flex-col">
     <Header />
-    <SiteBody />
+    <div className="flex-grow">
+      <SiteBody />
+    </div>
     <Footer />
   </div>
 )

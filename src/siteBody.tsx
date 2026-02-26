@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import EmojiSquare from './emojiSquare'
-import DATA from './emojis.json'
+import { emojis as ALL_EMOJIS } from './emojis.json'
 
 interface EmojiData {
   text: string
@@ -21,7 +21,7 @@ function shuffleArray<T>(array: T[]): T[] {
 const SiteBody: React.FC = () => {
   const [selected, setSelected] = useState<string | null>(null)
 
-  const allEmojis: EmojiData[] = (DATA as any).emojis
+  const allEmojis: EmojiData[] = ALL_EMOJIS as EmojiData[]
 
   const filtered = selected
     ? allEmojis.filter(e => e.tags.includes(selected))
@@ -30,27 +30,39 @@ const SiteBody: React.FC = () => {
   const emojis = shuffleArray(filtered)
 
   return (
-    <div className='container'>
-      <div className='row'>
-        <div className='col-12'>
-          <ul className='list-menu'>
-            <li className={!selected ? 'active' : ''} onClick={() => setSelected(null)}>All</li>
-            {categories.map(cat => (
-              <li
-                key={cat}
-                className={selected === cat ? 'active' : ''}
-                onClick={() => setSelected(cat)}
-              >
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </li>
-            ))}
-          </ul>
-        </div>
+    <main className="container mx-auto px-4 py-12">
+      <div className="flex flex-wrap justify-center gap-3 mb-12">
+        <button
+          className={`px-6 py-2 rounded-full font-medium transition-all duration-200 border ${
+            !selected
+              ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+              : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50'
+          }`}
+          onClick={() => setSelected(null)}
+        >
+          All
+        </button>
+        {categories.map(cat => (
+          <button
+            key={cat}
+            className={`px-6 py-2 rounded-full font-medium transition-all duration-200 border ${
+              selected === cat
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50'
+            }`}
+            onClick={() => setSelected(cat)}
+          >
+            {cat.charAt(0).toUpperCase() + cat.slice(1)}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {emojis.map((emoji, idx) => (
           <EmojiSquare key={idx} text={emoji.text} tags={emoji.tags} />
         ))}
       </div>
-    </div>
+    </main>
   )
 }
 

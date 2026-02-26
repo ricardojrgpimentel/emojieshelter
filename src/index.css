@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+:root {
+  --primary: #5c6bc0;
+  --bg: #f8fafc;
+}
+
+body {
+  background-color: #f8fafc;
+  color: #0f172a;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+}
