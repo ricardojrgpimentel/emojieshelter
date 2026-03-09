@@ -1,0 +1,27 @@
+{
+  "short_name": "EmojiShelter",
+  "name": "Emoji Shelter - Unicode Sanctuary",
+  "description": "A sanctuary for unicode characters and emojis. Save, create and share your favorite expressions.",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "emojieshelter.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "emojieshelter.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#4f46e5",
+  "background_color": "#020617"
+}

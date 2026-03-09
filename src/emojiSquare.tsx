@@ -7,18 +7,23 @@ interface EmojiSquareProps {
   tags: string[]
   isSheltered?: boolean
   onToggleShelter?: () => void
+  onTagClick?: (tag: string) => void
+  onCopy?: (text: string) => void
 }
 
 const EmojiSquare: React.FC<EmojiSquareProps> = ({ 
   text, 
   tags, 
   isSheltered = false, 
-  onToggleShelter 
+  onToggleShelter,
+  onTagClick,
+  onCopy
 }) => {
   const [copied, setCopied] = useState(false)
 
   const handleCopy = () => {
     setCopied(true)
+    onCopy?.(text)
     setTimeout(() => setCopied(false), 2000)
   }
 
@@ -68,12 +73,13 @@ const EmojiSquare: React.FC<EmojiSquareProps> = ({
 
       <div className="p-5 border-t border-slate-800 bg-slate-900/30 flex flex-wrap gap-2 mt-auto">
         {tags.map((tag, idx) => (
-          <span 
+          <button 
             key={idx} 
-            className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-slate-800 border border-slate-700 text-slate-400 rounded-lg"
+            onClick={() => onTagClick?.(tag)}
+            className="px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider bg-slate-800 border border-slate-700 text-slate-400 rounded-lg hover:bg-slate-700 hover:text-indigo-400 transition-colors cursor-pointer"
           >
             {tag}
-          </span>
+          </button>
         ))}
       </div>
     </motion.div>

@@ -8,7 +8,12 @@ interface EmojiData {
   tags: string[]
 }
 
-const categories = ['happy', 'pun', 'sad', 'confuse', 'angry', 'animal', 'love', 'expressive', 'textart'] as const
+interface SiteBodyProps {
+  zenMode?: boolean
+  onToggleZen?: () => void
+}
+
+const categories = ['happy', 'pun', 'sad', 'confuse', 'angry', 'animal', 'love', 'expressive', 'textart', 'music', 'food', 'nature'] as const
 
 function shuffleArray<T>(array: T[]): T[] {
   const arr = array.slice()
@@ -19,21 +24,64 @@ function shuffleArray<T>(array: T[]): T[] {
   return arr
 }
 
-const SiteBody: React.FC = () => {
-  const [selected, setSelected] = useState<typeof categories[number] | 'shelter' | null>(null)
-  const [search, setSearch] = useState('')
+const SiteBody: React.FC<SiteBodyProps> = ({ zenMode = false, onToggleZen }) => {
+  const [selected, setSelected] = useState<typeof categories[number] | 'shelter' | 'recent' | null>(() => {
+    const params = new URLSearchParams(window.location.search)
+    const cat = params.get('category') as any
+    if (cat === 'shelter' || cat === 'recent' || categories.includes(cat)) return cat
+    return null
+  })
+  const [search, setSearch] = useState(() => {
+    const params = new URLSearchParams(window.location.search)
+    return params.get('search') || ''
+  })
+
+  // Update URL when search or selected changes
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    if (search) {
+      url.searchParams.set('search', search)
+    } else {
+      url.searchParams.delete('search')
+    }
+
+    if (selected) {
+      url.searchParams.set('category', selected)
+    } else {
+      url.searchParams.delete('category')
+    }
+
+    window.history.replaceState({}, '', url.toString())
+  }, [search, selected])
+
   const [sheltered, setSheltered] = useState<string[]>(() => {
     const saved = localStorage.getItem('sheltered_emojis')
     return saved ? JSON.parse(saved) : []
   })
+  const [recents, setRecents] = useState<string[]>(() => {
+    const saved = localStorage.getItem('recent_emojis')
+    return saved ? JSON.parse(saved) : []
+  })
+  const [customEmojis, setCustomEmojis] = useState<EmojiData[]>(() => {
+    const saved = localStorage.getItem('custom_emojis')
+    return saved ? JSON.parse(saved) : []
+  })
 
-  const allEmojis: EmojiData[] = ALL_EMOJIS as EmojiData[]
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [newEmojiText, setNewEmojiText] = useState('')
+  const [newEmojiTags, setNewEmojiTags] = useState('')
+  const [lastCopied, setLastCopied] = useState<string | null>(null)
+
+  const allEmojis: EmojiData[] = useMemo(() => [...(ALL_EMOJIS as EmojiData[]), ...customEmojis], [customEmojis])
 
   const filtered = useMemo(() => {
     let result = allEmojis
 
     if (selected === 'shelter') {
       result = result.filter(e => sheltered.includes(e.text))
+    } else if (selected === 'recent') {
+      result = recents.map(text => allEmojis.find(e => e.text === text)).filter(Boolean) as EmojiData[]
+      return result // Don't shuffle recents
     } else if (selected) {
       result = result.filter(e => e.tags.includes(selected))
     }
@@ -47,7 +95,7 @@ const SiteBody: React.FC = () => {
       )
     }
     return shuffleArray(result)
-  }, [selected, search, sheltered, allEmojis])
+  }, [selected, search, sheltered, recents, allEmojis])
 
   const toggleShelter = (text: string) => {
     setSheltered(prev => {
@@ -57,6 +105,77 @@ const SiteBody: React.FC = () => {
       localStorage.setItem('sheltered_emojis', JSON.stringify(next))
       return next
     })
+  }
+
+  const handleEmojiCopy = (text: string) => {
+    setLastCopied(text)
+    setRecents(prev => {
+      const next = [text, ...prev.filter(t => t !== text)].slice(0, 12)
+      localStorage.setItem('recent_emojis', JSON.stringify(next))
+      return next
+    })
+  }
+
+  const handleAddEmoji = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newEmojiText) return
+    const tags = newEmojiTags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
+    const newEmoji: EmojiData = { text: newEmojiText, tags }
+    const updated = [...customEmojis, newEmoji]
+    setCustomEmojis(updated)
+    localStorage.setItem('custom_emojis', JSON.stringify(updated))
+    setNewEmojiText('')
+    setNewEmojiTags('')
+    setShowAddModal(false)
+  }
+
+  const exportShelter = () => {
+    const data = {
+      sheltered: sheltered,
+      custom: customEmojis
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `emojie-shelter-backup-${new Date().toISOString().split('T')[0]}.json`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const importShelter = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target?.result as string)
+        if (data.sheltered) {
+          setSheltered(data.sheltered)
+          localStorage.setItem('sheltered_emojis', JSON.stringify(data.sheltered))
+        }
+        if (data.custom) {
+          setCustomEmojis(data.custom)
+          localStorage.setItem('custom_emojis', JSON.stringify(data.custom))
+        }
+        alert('Shelter imported successfully!')
+      } catch (err) {
+        alert('Failed to import: Invalid file format.')
+      }
+    }
+    reader.readAsText(file)
+  }
+
+  const handleTagClick = (tag: string) => {
+    const category = categories.find(c => c === tag)
+    if (category) {
+      setSelected(category)
+      setSearch('')
+    } else {
+      setSelected(null)
+      setSearch(tag)
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
@@ -130,6 +249,15 @@ const SiteBody: React.FC = () => {
             color="rose"
           />
 
+          {recents.length > 0 && (
+            <CategoryButton
+              active={selected === 'recent'}
+              onClick={() => setSelected('recent')}
+              label={`🕒 Recent (${recents.length})`}
+              color="indigo"
+            />
+          )}
+
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -142,8 +270,100 @@ const SiteBody: React.FC = () => {
           >
             🎲 Random
           </motion.button>
+
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="px-6 py-3 rounded-full font-bold transition-all duration-300 bg-indigo-600 text-white shadow-lg hover:shadow-indigo-500/40 flex items-center gap-2"
+            onClick={() => setShowAddModal(true)}
+          >
+            ➕ Add Custom
+          </motion.button>
+
+          <div className="flex gap-2">
+            <button
+              onClick={onToggleZen}
+              className={`p-3 rounded-full transition-colors ${zenMode ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`}
+              title={zenMode ? "Exit Zen Mode" : "Enter Zen Mode"}
+            >
+              👁️
+            </button>
+            <button
+              onClick={exportShelter}
+              className="p-3 bg-slate-800 text-slate-300 rounded-full hover:bg-slate-700 transition-colors"
+              title="Export Shelter"
+            >
+              📤
+            </button>
+            <label className="p-3 bg-slate-800 text-slate-300 rounded-full hover:bg-slate-700 transition-colors cursor-pointer" title="Import Shelter">
+              📥
+              <input type="file" accept=".json" onChange={importShelter} className="hidden" />
+            </label>
+          </div>
         </motion.div>
       </div>
+
+      {/* Add Emoji Modal */}
+      <AnimatePresence>
+        {showAddModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAddModal(false)}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-md" 
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-lg bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl"
+            >
+              <h3 className="text-2xl font-black text-white mb-6">Create Custom Emoji</h3>
+              <form onSubmit={handleAddEmoji} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-400 uppercase tracking-widest">Emoji Text</label>
+                  <input
+                    autoFocus
+                    type="text"
+                    required
+                    placeholder="( ͡° ͜ʖ ͡°)"
+                    className="w-full px-6 py-4 bg-slate-800 border border-slate-700 rounded-2xl focus:border-indigo-500 focus:outline-none text-white text-xl font-mono"
+                    value={newEmojiText}
+                    onChange={(e) => setNewEmojiText(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-400 uppercase tracking-widest">Tags (comma separated)</label>
+                  <input
+                    type="text"
+                    placeholder="happy, pun, funny"
+                    className="w-full px-6 py-4 bg-slate-800 border border-slate-700 rounded-2xl focus:border-indigo-500 focus:outline-none text-white"
+                    value={newEmojiTags}
+                    onChange={(e) => setNewEmojiTags(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-4 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="flex-1 px-6 py-4 bg-slate-800 text-white font-bold rounded-2xl hover:bg-slate-700 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-6 py-4 bg-indigo-600 text-white font-bold rounded-2xl hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-500/20"
+                  >
+                    Create Emoji
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Grid */}
       <motion.div 
@@ -168,6 +388,8 @@ const SiteBody: React.FC = () => {
                 tags={emoji.tags} 
                 isSheltered={sheltered.includes(emoji.text)}
                 onToggleShelter={() => toggleShelter(emoji.text)}
+                onTagClick={handleTagClick}
+                onCopy={handleEmojiCopy}
               />
             </motion.div>
           ))}
@@ -195,40 +417,67 @@ const SiteBody: React.FC = () => {
         )}
       </AnimatePresence>
       {/* About Section */}
-      <motion.section 
-        id="about" 
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
-        viewport={{ once: true }}
-        transition={{ duration: 1 }}
-        className="max-w-4xl mx-auto py-32 border-t border-slate-900 mt-24"
-      >
-        <div className="grid md:grid-cols-2 gap-16 items-center">
-          <div>
-            <h2 className="text-4xl font-black text-white mb-6 tracking-tight">
-              A Sanctuary for <span className="text-indigo-400">Characters</span>
-            </h2>
-            <p className="text-slate-400 text-lg leading-relaxed mb-6">
-              Emoji Shelter was born from a simple idea: that digital expressions deserve a place to shine. We curate the most beautiful, expressive, and unique unicode characters so you can find exactly what you need to breathe life into your conversations.
-            </p>
-            <div className="flex gap-4">
-              <div className="px-4 py-2 bg-slate-800 rounded-xl border border-slate-700 text-xs font-bold text-slate-300 uppercase tracking-widest">
-                100% Unicode
-              </div>
-              <div className="px-4 py-2 bg-slate-800 rounded-xl border border-slate-700 text-xs font-bold text-slate-300 uppercase tracking-widest">
-                Privacy First
+      {!zenMode && (
+        <motion.section 
+          id="about" 
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1 }}
+          className="max-w-4xl mx-auto py-32 border-t border-slate-900 mt-24"
+        >
+          <div className="grid md:grid-cols-2 gap-16 items-center">
+            <div>
+              <h2 className="text-4xl font-black text-white mb-6 tracking-tight">
+                A Sanctuary for <span className="text-indigo-400">Characters</span>
+              </h2>
+              <p className="text-slate-400 text-lg leading-relaxed mb-6">
+                Emoji Shelter was born from a simple idea: that digital expressions deserve a place to shine. We curate the most beautiful, expressive, and unique unicode characters so you can find exactly what you need to breathe life into your conversations.
+              </p>
+              <div className="flex gap-4">
+                <div className="px-4 py-2 bg-slate-800 rounded-xl border border-slate-700 text-xs font-bold text-slate-300 uppercase tracking-widest">
+                  100% Unicode
+                </div>
+                <div className="px-4 py-2 bg-slate-800 rounded-xl border border-slate-700 text-xs font-bold text-slate-300 uppercase tracking-widest">
+                  Privacy First
+                </div>
               </div>
             </div>
+            <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-3xl p-8 border border-slate-800 backdrop-blur-sm">
+              <div className="text-6xl mb-4 group-hover:animate-bounce transition-all">🏠</div>
+              <h3 className="text-xl font-bold text-white mb-2">Build Your Shelter</h3>
+              <p className="text-slate-500">
+                Save your favorite emojis to your personal local shelter. No accounts, no tracking—just your favorite expressions, right where you need them.
+              </p>
+            </div>
           </div>
-          <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-3xl p-8 border border-slate-800 backdrop-blur-sm">
-            <div className="text-6xl mb-4 group-hover:animate-bounce transition-all">🏠</div>
-            <h3 className="text-xl font-bold text-white mb-2">Build Your Shelter</h3>
-            <p className="text-slate-500">
-              Save your favorite emojis to your personal local shelter. No accounts, no tracking—just your favorite expressions, right where you need them.
-            </p>
-          </div>
-        </div>
-      </motion.section>
+        </motion.section>
+      )}
+
+      {/* Live Preview Sticky Bar */}
+      <AnimatePresence>
+        {lastCopied && (
+          <motion.div 
+            initial={{ y: 100 }}
+            animate={{ y: 0 }}
+            exit={{ y: 100 }}
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 w-[90%] max-w-2xl"
+          >
+            <div className="bg-slate-900/90 backdrop-blur-xl border border-indigo-500/30 rounded-2xl p-6 shadow-2xl shadow-indigo-500/20">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-xs font-black text-indigo-400 uppercase tracking-widest">Live Context Preview</span>
+                <button onClick={() => setLastCopied(null)} className="text-slate-500 hover:text-white transition-colors">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <div className="bg-slate-950/50 rounded-xl p-4 border border-slate-800 italic text-lg text-slate-300">
+                "Hello! This is how your emoji <span className="text-white font-mono not-italic bg-indigo-500/20 px-2 py-1 rounded mx-1">{lastCopied}</span> looks in a sentence."
+              </div>
+              <p className="mt-4 text-[10px] text-slate-500 text-center font-medium">The preview shows your last copied emoji</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </main>
   )
 }
